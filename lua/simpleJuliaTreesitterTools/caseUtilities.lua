@@ -26,18 +26,18 @@ function M.capitalize(word)
 end
 
 M.formatters = {
-    UpperCamelCase = function(words)
-        local parts = {}
-        for _, word in ipairs(words) do
-            table.insert(parts, M.capitalize(word))
-        end
-        return table.concat(parts, '')
-    end,
-
     camelCase = function(words)
         local parts = { vim.fn.tolower(words[1]) }
         for i = 2, #words do
             table.insert(parts, M.capitalize(words[i]))
+        end
+        return table.concat(parts, '')
+    end,
+
+    UpperCamelCase = function(words)
+        local parts = {}
+        for _, word in ipairs(words) do
+            table.insert(parts, M.capitalize(word))
         end
         return table.concat(parts, '')
     end,
@@ -50,13 +50,23 @@ M.formatters = {
         return table.concat(parts, '_')
     end,
 
-    screaming_snake_case = function(words)
+    SCREAMING_SNAKE_CASE = function(words)
         local parts = {}
         for _, word in ipairs(words) do
             table.insert(parts, vim.fn.toupper(word))
         end
         return table.concat(parts, '_')
     end,
+
+    AbstractUpperCamelCase = function(words)
+        local result = M.formatters.UpperCamelCase(words)
+        if string.match(result, "^Abstract") then
+            return result
+        else
+            return "Abstract" .. result
+        end
+    end,
+
 }
 
 function M.convert(text, target_case)

@@ -1,8 +1,9 @@
-I wanted to test out linting Julia naming conventions via treesitter
+So far this repo just tests out adhering to naming conventions in Julia via treesitter.
+This obviously cannot be completely correct, but for most cases I think treesitter should be able to handle things.
 The current functionality is a best-effort attempt to check that modules, types, constants, and functions have the correct case.
 Violations of naming conventions are sent to the quickfix list.
 
-There is also a half-finished experimental implementation that tries to interface with the LanguageServer.jl LSP for everything; this works poorly.
+There is also a half-finished experimental implementation that tries to interface with the LanguageServer.jl LSP for everything; this works poorly (if at all) -- I was surprised that LSP-based enforcement wasn't already an option, but I'm sure a smarter, functional implementation is out there somewhere.
 
 ## Installation, configuration, and requirements
 
@@ -26,10 +27,10 @@ There are a small handful of default options that can be changed by passing opti
     config = function()
         require("simpleJuliaTreesitterTools").setup({
             rules = {
-                ["Constant"] = "screaming_snake_case",
+                ["Constant"] = "SCREAMING_SNAKE_CASE",
                 ["Module"] = "UpperCamelCase",
                 ["Struct"] = "UpperCamelCase",
-                ["AbstractType"] = "UpperCamelCase",
+                ["AbstractType"] = "AbstractUpperCamelCase",
                 ["Function"] = "snake_case",
             },
             defaultApproach = "treesitter", --or "lsp"...
@@ -45,10 +46,12 @@ There are a small handful of default options that can be changed by passing opti
 }
 ```
 
+## To-do
+
+Any number of improvements could be made, and of course I'll probably want some other (e.g.) treesitter-based text objects to use for purposes other than linting. 
+On the naming conventions, I just noticed that guides enforce variable name conventions, too... I'm not sure about that (vectors and matrices, right?), but the current pattern of filtering future queries could be used to handle this.
 
 
 ### Thanks?
 
-If, for some unexpected reason, you found this helpful and would like to offer support:
-
-[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-blue.png)](https://www.buymeacoffee.com/danielmsussman)
+If, for some unexpected reason, you found this helpful and would like to offer support: [Buy Me a Coffee!](https://www.buymeacoffee.com/danielmsussman)
