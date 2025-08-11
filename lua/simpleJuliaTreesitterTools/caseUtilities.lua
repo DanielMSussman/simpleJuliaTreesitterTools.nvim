@@ -69,53 +69,22 @@ function M.convert(text, target_case)
     end
 
     local words = M.split_into_words(text)
-    local result = formatter(words)
+    local theThe_one_Right_trueFormatting = formatter(words)
+    return theThe_one_Right_trueFormatting
+end
+
+--given a name, the kind, and the rules... what should the name be
+function M.target_name(name,kind,rules_table)
+    local target_case = rules_table[kind]
+
+    -- what is not forbidden is allowed
+    if not target_case then
+        return nil
+    end
+
+    local result = M.convert(name, target_case)
+    -- vim.notify(target_case.."  "..result)
     return result
 end
 
 return M
-
--- Iterations of garbage
-
--- function H.is_not_snake_case(s)
---   return not s:match("^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)*!?$")
--- end
---
--- function H.is_not_screaming_snake_case(s)
---   return not s:match("^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)*!?$")
--- end
---
--- function H.is_not_upper_camel_case(s)
---   return not s:match("^[a-z][a-za-z0-9]*!?$")
--- end
-
--- function H.is_not_snake_case(s)
---   local pattern = vim.regex("^[[:lower:]][[:lower:]0-9]*(_[[:lower:]][[:lower:]0-9]*)*!?$")
---   return not pattern:match_str(s)
--- end
---
--- function H.is_not_screaming_snake_case(s)
---   local pattern = vim.regex("^[[:upper:]][[:upper:]0-9]*(_[[:upper:]][[:upper:]0-9]*)*!?$")
---   return not pattern:match_str(s)
--- end
---
--- function H.is_not_upper_camel_case(s)
---   local pattern = vim.regex("^[[:upper:]][[:alnum:]]*!?$")
---   return not pattern:match_str(s)
--- end
-
--- function H.to_snake_case(s)
---   return s:gsub("(%u)", function(c) return "_" .. c:lower() end)
---           :gsub("^_", "")
--- end
---
--- function H.to_upper_camel_case(s)
---   local str = s:gsub("_([a-z])", function(c) return c:upper() end)
---   return str:sub(1,1):upper() .. str:sub(2)
--- end
---
--- function H.to_screaming_snake_case(s)
---   local snake_cased = s:gsub("(%u)", function(c) return "_" .. c end):gsub("^_", "")
---   return snake_cased:upper()
--- end
-
