@@ -1,5 +1,9 @@
 local M = {}
 
+-- This modules attempts to use the LSP to both identify symbols and 
+-- rename them across the workspace. I find both to work only inconsistently
+-- so far. Skill issue.
+--
 M.current_violation_index = 0
 M.violations = {}
 
