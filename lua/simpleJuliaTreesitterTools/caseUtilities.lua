@@ -2,16 +2,18 @@ local M = {}
 
 -- Why am I writing this instead of just using vim-abolish, or textcase.nvim, or ...
 -- ???
+-- vim.fn.tolower, etc, used for unicode
 
-function M.split_into_words(s)
-    local separator = '_'
+function M.split_and_lowercase(s)
+    local separator = '\0'
 
     --s1 through s3 swap or insert the separator for _, before capital letters, and try to respect acronyms
     local s1 = vim.fn.substitute(s, '[_.-]', separator, 'g')
     local s2 = vim.fn.substitute(s1, '\\v(\\l|\\d)@<=(\\u)', separator .. '\\2', 'g')
     local s3 = vim.fn.substitute(s2, '\\v(\\u)@<=(\\u\\l)', separator .. '\\2', 'g')
 
-    return vim.split(s3, separator)
+    local words = vim.split(s3,separator)
+    return vim.tbl_map(vim.fn.tolower, words)
 end
 
 function M.capitalize(word)
@@ -25,9 +27,10 @@ function M.capitalize(word)
     return vim.fn.toupper(first_char) .. rest
 end
 
+--all formatters expect `words` to be a table of lowercase symbols
 M.formatters = {
     camelCase = function(words)
-        local parts = { vim.fn.tolower(words[1]) }
+        local parts = { words[1] }
         for i = 2, #words do
             table.insert(parts, M.capitalize(words[i]))
         end
@@ -35,27 +38,16 @@ M.formatters = {
     end,
 
     UpperCamelCase = function(words)
-        local parts = {}
-        for _, word in ipairs(words) do
-            table.insert(parts, M.capitalize(word))
-        end
-        return table.concat(parts, '')
+        return table.concat(vim.tbl.map(M.capitalize, words), '')
     end,
 
     snake_case = function(words)
-        local parts = {}
-        for _, word in ipairs(words) do
-            table.insert(parts, vim.fn.tolower(word))
-        end
-        return table.concat(parts, '_')
+        return table.concat(words, '_')
     end,
 
     SCREAMING_SNAKE_CASE = function(words)
-        local parts = {}
-        for _, word in ipairs(words) do
-            table.insert(parts, vim.fn.toupper(word))
-        end
-        return table.concat(parts, '_')
+        local upper_words = vim.tbl.map(vim.fn.toupper,words)
+        return table.concat(upper_words, '_')
     end,
 
     AbstractUpperCamelCase = function(words)
@@ -78,7 +70,7 @@ function M.convert(text, target_case)
         return text
     end
 
-    local words = M.split_into_words(text)
+    local words = M.split_and_lowercase(text)
     local theThe_one_Right_trueFormatting = formatter(words)
     return theThe_one_Right_trueFormatting
 end
