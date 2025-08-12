@@ -1,0 +1,77 @@
+*simpleJuliaTreesitterTools.txt* treesitter-powered... something for Julia
+*simpleJuliaTreesitterTools.nvim*
+
+Author:   Daniel M. Sussman 
+Homepage: <https://github.com/DanielMSussman/simpleJuliaTreesitterTools.nvim>
+License:  MIT license
+
+==============================================================================
+CONTENTS                                   *simpleJuliaTreesitterTools-contents*
+
+    INTRO ................................... |simpleJuliaTreesitterTools-intro|
+    CONFIGURATION ................... |simpleJuliaTreesitterTools-configuration|
+    COMMANDS ............................. |simpleJuliaTreesitterTools-commands|
+
+==============================================================================
+INTRO                                         *simpleJuliaTreesitterTools-intro*
+
+simpleJuliaTreesitterTools is a plugin that defines a small number of commands
+for... well, at the moment just linting Julia buffers and projects for style
+guide naming violations.
+More documentation if it is ever needed.
+
+
+==============================================================================
+CONFIGURATION                         *simpleJuliaTreesitterTools-configuration*
+
+For basic setup with all of the defaults:
+>lua
+>lua
+    {
+    "DanielMSussman/simpleJuliaTreesitterTools.nvim",
+    dependencies = { 'nvim-treesitter/nvim-treesitter'},
+    ft = "julia",
+    }
+<
+
+
+Changing the defaults can be done by specifying various options:
+>lua
+    {
+    "DanielMSussman/simpleJuliaTreesitterTools.nvim",
+    dependencies = { 'nvim-treesitter/nvim-treesitter'},
+    ft = "julia",
+    config = function()
+        require("simpleJuliaTreesitterTools").setup({
+            rules = {
+                ["Constant"] = "SCREAMING_SNAKE_CASE",
+                ["Module"] = "UpperCamelCase",
+                ["Struct"] = "UpperCamelCase",
+                ["AbstractType"] = "AbstractUpperCamelCase",
+                ["Function"] = "snake_case",
+            },
+            defaultApproach = "treesitter", --or "lsp"...
+        })
+    }
+<
+More information... when needed. The "lsp" option does not really
+work, so I recommend not using it.
+
+==============================================================================
+COMMANDS                                   *simpleJuliaTreesitterTools-commands*
+
+>lua
+    require('simpleJuliaTreesitterTools').lint_buffer_names()
+<
+Comb through the buffer for constant / module / type / function definitions
+and send all violoations of the naming conventions to the quickfix list.
+
+>lua
+    require('simpleJuliaTreesitterTools').lint_project_names()
+<
+From the current directory, search upward until a `Project.toml` file is 
+found, then recursively find all `.jl` files in the `src/` directory.
+Comb through all files for constant / module / type / function definitions
+and send all violoations of the naming conventions to the quickfix list.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
