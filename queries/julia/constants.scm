@@ -1,16 +1,9 @@
-[
 (const_statement
   (assignment
-    (identifier) @constant.definition
-    (operator)))
-(const_statement
-  (assignment
-    (open_tuple
-      (identifier) @constant.definition)
+    [
+     ;;match an identifier, or a tuple / open_tuple, immediately followed by an =
+     (identifier) @constant.definition
+     (_
+       (identifier) @constant.definition)
+     ]
     .(operator)))
-(const_statement
-  (assignment
-    (tuple_expression
-      (identifier) @constant.definition)
-    .(operator)))
-]

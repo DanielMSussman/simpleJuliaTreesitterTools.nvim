@@ -11,10 +11,10 @@ end
 
 end
 
-abstract type T end
-abstract type T <: S end
-abstract type T{S} <: U end
-abstract type W{S} end
+abstract type AbstractT end
+abstract type B <: S end
+abstract type X{S} <: U end
+abstract type w{S} end
 
 primitive type T 8 end
 primitive type T <: S 16 end
@@ -29,17 +29,22 @@ mutable struct Foo
   baz::Float64
 end
 
-struct Point{T}
+struct point{T}
   x::T
   y::T
 end
 
-struct Rational{T<:Integer} <: Real
+struct rational{T<:Integer} <: Real
   num::T
   den::T
 end
 
 struct Rationale{T<:Integer}
+  num::T
+  den::T
+end
+
+struct Rationaley{T<:Integer} <: Rationale{T}
   num::T
   den::T
 end
@@ -57,16 +62,22 @@ function I(x) x end
 function Base.rand(n::MyInt)
     return 4
 end
+function Base.rand(n::MyInt) where {T}
+    return 4
+end
 
 function Γ(z)
     gamma(z)
 end
 
+function my_func(x) where{T}
+
+end
 function ⊕(x, y)
     x + y
 end
 
-function fix2(f, x)
+function fIx2(f, x)
     return function(y)
         f(x, y)
     end
@@ -77,7 +88,7 @@ end
 
 s(n) = n + 1
 
-Base.foo(x) = x
+Base.fOO(x) = x
 
 ι(n) = range(1, n)
 
@@ -85,9 +96,13 @@ Base.foo(x) = x
 
 (+)(x, y) = x + y
 
+my_FNcs(x) = x
+x= otherfunction(z)
 
+my_F = x-> 12*x
 const x = "asd"
 
 const y,z = 1,2
 
 const (y,z) = 1,2
+const (Y,Z) = (AbstractArray,AbstractFloat)

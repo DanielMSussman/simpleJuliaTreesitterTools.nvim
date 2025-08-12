@@ -1,65 +1,50 @@
 [
- ;; Matches `function my_func(...) ... end`
+ ; function blah blah end
  (function_definition
    (signature
-     (call_expression
-       (identifier) @function.definition)
-     ))
- ;; handles where expressions
- (function_definition
-   (signature
-     (where_expression
-       (call_expression
-         (identifier) @function.definition)
-       )))
- ;; handles `MyModule.my_func(...)
- (function_definition
-   (signature
-     (where_expression
-       (call_expression
-         (field_expression
-           (identifier)
-           (identifier) @function.definition)
-         ))))
- ;; handles `MyModule.my_func(...) where{}
- (function_definition
-   (signature
-     (call_expression
-       (field_expression
-         (identifier)
-         (identifier) @function.definition)
-       )))
+     [
+      ;; Matches `function my_func end`
+      (identifier) @function.definition
+      ;; Matches `function my_func(...) ... end`
+      (call_expression
+        (identifier) @function.definition)
+      (call_expression
+        (operator) @function.definition)
 
- ;; matches operator symbols
- (function_definition
-   (signature
-     (call_expression
-       (operator) @function.definition
-       )))
- ;; Matches `my_func(x) = ...`, but not x = other_func(z), by demanding an operator
+      ;; handles `MyModule.my_func(...)
+      (call_expression
+        (field_expression
+          (identifier)
+          (identifier) @function.definition))
+      (where_expression
+        (call_expression
+          [
+           (identifier) @function.definition
+           (field_expression
+             (identifier)
+             (identifier) @function.definition)
+           ]
+          ))
+      ]
+     ));;end function defs
+ ;; f = blah blah 
  (assignment
-   (call_expression
-     (identifier) @function.definition)
-   .
-   (operator)
-   )
- ;; Matches `my_func = x-> ...
- (assignment
-   (identifier) @function.definition
-   (operator)
-   (arrow_function_expression)
-   )
- ;; matches `"operator symbol"(x,y)...
- (assignment
-   (call_expression
-     (operator) @function.definition)
-   .
-   (operator)
-   )
- ;; matches ("operator symbol")(x,y) =...
- (assignment
-   (call_expression
-     (parenthesized_expression
+   [
+    ;; Matches `my_func = x-> ...
+    ((identifier) @function.definition
+                  (operator)
+                  (arrow_function_expression))
+    ;; Matches `my_func(x) = ...`, but not x = other_func(z), by demanding an operator
+    ((call_expression
+       (identifier) @function.definition)
+     . (operator))
+    ;; matches `"operator symbol"(x,y)...
+    ((call_expression
        (operator) @function.definition)
-     ))
+     . (operator))
+    ;; matches ("operator symbol")(x,y) =...
+    ((call_expression
+       (parenthesized_expression
+         (operator) @function.definition)))
+    ])
  ]

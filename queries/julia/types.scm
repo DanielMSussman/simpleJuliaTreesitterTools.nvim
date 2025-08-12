@@ -9,12 +9,15 @@
         (identifier) @type.definition)
       ;; Catches `struct MyType <: Other`
       (binary_expression
-        (identifier) @type.definition)
+        (identifier) @type.definition
+        .(operator))
       ;; Catches `struct MyType{T<:Other} <: OtherOther`
       (binary_expression
         (parametrized_type_expression
-          (identifier) @type.definition))
+          (identifier) @type.definition)
+        .(operator))
       ]))
+
  (abstract_definition
    (type_head
      [
@@ -22,10 +25,12 @@
       (parametrized_type_expression
         (identifier) @abstracttype.definition)
       (binary_expression
-        (identifier) @abstracttype.definition)
+        (identifier) @abstracttype.definition
+        .(operator))
       (binary_expression
         (parametrized_type_expression
-          (identifier) @abstracttype.definition))
+          (identifier) @abstracttype.definition)
+        .(operator))
       ]))
 
  (primitive_definition
