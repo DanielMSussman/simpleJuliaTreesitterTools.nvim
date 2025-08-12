@@ -62,6 +62,18 @@ function M.process_trees(trees)
 
     local typeLookup = helpers.create_lookup_table(all_types)
 
+    local primitive_types = {
+        "AbstractChar", "AbstractFloat", "AbstractString", "Bool", "Char",
+        "ComplexF16", "ComplexF32", "ComplexF64", "Float16", "Float32", "Float64",
+        "Int128", "Int16", "Int32", "Int64", "Int8", "Integer","Int", "Number",
+        "Real", "Signed", "String", "Symbol", "UInt128", "UInt16", "UInt32",
+        "UInt64", "UInt8", "Unsigned", "Nothing", "Missing", "Any"
+    }
+
+    for _, type_name in ipairs(primitive_types) do
+        typeLookup[type_name] = true
+    end
+
     local all_modules = M.process_query_over_trees(trees,"modules","module.definition",{},"Module")
 
     local all_functions = M.process_query_over_trees(trees,"functions","function.definition",typeLookup,"Function")
