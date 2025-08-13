@@ -57,7 +57,7 @@ function M.process_trees(trees,config)
     local all_types = M.process_query_over_trees(trees,"types","type.definition",{},"Struct",config)
     local all_abstract_types = M.process_query_over_trees(trees,"types","abstracttype.definition",{},"AbstractType",config)
 
-    local typeLookup = helpers.create_lookup_table({all_types,all_abstract_types,defaultsAndData.PrimitiveTypes})
+    local typeLookup = helpers.create_lookup_table({all_types,all_abstract_types})
 
     local all_modules = M.process_query_over_trees(trees,"modules","module.definition",{},"Module",config)
 

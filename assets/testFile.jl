@@ -1,4 +1,4 @@
-# This file is stiched together from tree-sitter-julia (MIT license).
+# This file is stitched together from tree-sitter-julia (MIT license).
 # In particular, I've taken various entries in the test/corpus directory.
 # They are not exhaustive, and I've added a few extra cases
 
@@ -59,19 +59,20 @@ function nop() end
 
 function I(x) x end
 
-function Base.rand(n::MyInt)
-    return 4
-end
-function Base.rand(n::MyInt) where {T}
-    return 4
-end
+
+const f = I(x)
 
 function Γ(z)
     gamma(z)
 end
+function my_func(x::T) where{T}
+    return x
+end
+
+Base.Int(x::MyType) = x
 
 function my_func(x) where{T}
-
+    return x
 end
 function ⊕(x, y)
     x + y
@@ -88,7 +89,6 @@ end
 
 s(n) = n + 1
 
-Base.fOO(x) = x
 
 ι(n) = range(1, n)
 
@@ -100,6 +100,18 @@ my_FNcs(x) = x
 x= otherfunction(z)
 
 my_F = x-> 12*x
+
+begin_function(x,y) = begin
+    z = x+y
+    2*z
+end
+
+#from https://docs.julialang.org/en/v1/manual/constructors/
+struct OrderedPair
+           x::Real
+           y::Real
+           OrderedPair(x,y) = x > y ? error("out of order") : new(x,y)
+       end
 const x = "asd"
 
 const y,z = 1,2

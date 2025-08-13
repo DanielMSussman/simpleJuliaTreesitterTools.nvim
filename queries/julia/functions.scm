@@ -10,20 +10,10 @@
         (identifier) @function.definition)
       (call_expression
         (operator) @function.definition)
-
-      ;; handles `MyModule.my_func(...)
-      (call_expression
-        (field_expression
-          (identifier)
-          (identifier) @function.definition))
+      ;; function f(x::T) where {T}
       (where_expression
         (call_expression
-          [
-           (identifier) @function.definition
-           (field_expression
-             (identifier)
-             (identifier) @function.definition)
-           ]
+          (identifier) @function.definition
           ))
       ]
      ));;end function defs
