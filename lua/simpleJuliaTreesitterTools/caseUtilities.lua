@@ -4,7 +4,7 @@ local M = {}
 -- ???
 -- vim.fn.tolower, etc, used for unicode
 
-function M.split_and_lowercase(s)
+function M.split_word(s)
     local separator = '-'
 
     --s1 through s3 swap or insert the separator for _, before capital letters, and try to respect acronyms
@@ -12,8 +12,7 @@ function M.split_and_lowercase(s)
     local s2 = vim.fn.substitute(s1, '\\v(\\l|\\d)@<=(\\u)', separator .. '\\2', 'g')
     local s3 = vim.fn.substitute(s2, '\\v(\\u)@<=(\\u\\l)', separator .. '\\2', 'g')
 
-    local words = vim.split(s3,separator)
-    return vim.tbl_map(vim.fn.tolower, words)
+    return vim.split(s3,separator)
 end
 
 function M.capitalize(word)
@@ -30,7 +29,8 @@ end
 --all formatters expect `words` to be a table of lowercase symbols
 M.formatters = {
     camelCase = function(words)
-        local parts = { words[1] }
+        if #words ==0 then return '' end
+        local parts = { vim.fn.tolower(words[1]) }
         for i = 2, #words do
             table.insert(parts, M.capitalize(words[i]))
         end
@@ -42,7 +42,8 @@ M.formatters = {
     end,
 
     lowercase = function(words)
-        return table.concat(words, '')
+        local lower_words = vim.tbl_map(vim.fn.tolower,words)
+        return table.concat(lower_words, '')
     end,
 
     UPPERCASE = function(words)
@@ -51,7 +52,8 @@ M.formatters = {
     end,
 
     snake_case = function(words)
-        return table.concat(words, '_')
+        local lower_words = vim.tbl_map(vim.fn.tolower,words)
+        return table.concat(lower_words, '_')
     end,
 
     SCREAMING_SNAKE_CASE = function(words)
@@ -79,9 +81,9 @@ function M.convert(text, target_case)
         return text
     end
 
-    local words = M.split_and_lowercase(text)
-    local theThe_one_Right_trueFormatting = formatter(words)
-    return theThe_one_Right_trueFormatting
+    local words = M.split_word(text)
+    local The_one_Right_trueFormatting = formatter(words)
+    return The_one_Right_trueFormatting
 end
 
 --given a name, the kind, and the rules... what should the name be
