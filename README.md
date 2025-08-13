@@ -2,7 +2,7 @@ This lightweight collection of treesitter tools for Julia currently focuses just
 
 It makes a best-effort attempt to parse your code and check that modules, types, constants, and functions adhere to your preferred case conventions.
 It's smart enough -- since treesitter doesn't give us semantic information -- to identify all type definitions first, which helps it avoid incorrectly flagging constructors as function-naming violations.
-
+So far this all works reasonably well, although there are of course cases that are out of scope for purely syntactic analysis.
 
 ### Features
 
@@ -11,17 +11,22 @@ It's smart enough -- since treesitter doesn't give us semantic information -- to
 - Configurable naming rules for compliance with your preferred style
 - Reporting modes: `quickfix` to send all violations to the quickfix list for review or `jump` to jump to the first violation and then cycle through the rest.
 
-### Demo
+### Demos
 
 
-Here's a brief demo checking the ForwardDiff.jl package, then monkeying around in it to generate some violations:
+Here's a brief demo checking the ForwardDiff.jl package (with plugin options set to the naming convention ForwardDiff.jl uses), then monkeying around in it to generate some violations:
 
 https://github.com/user-attachments/assets/dde15d57-86c9-4f86-bca1-86b14d234bbf
 
 Notice that in the above video when we change `Dual` to `dual` the previously unreported use of the constructors throws a potential flag.
-So far this all works reasonably well, although I'm sure there are corner cases that are outside of my (or treesitter's?) ability to correctly parse.
 
-There is also a half-finished experimental implementation that tries to interface with the LanguageServer.jl LSP for everything; this works poorly (if at all) -- I was surprised that LSP-based enforcement wasn't already an option, but I'm sure a smarter, functional implementation is out there somewhere.
+
+Here's another example taking a look at JuMP.jl, using the `jump` mode rather than the quickfix list (using the same naming convention request as before, which may or may not be what the JuMP.jl team wants).
+
+https://github.com/user-attachments/assets/857f32a1-c441-4ad7-b7ed-041e807df0b4
+
+This also highlights some of the limitations of syntactic rather than semantic analysis.
+For instance, in the macro at the beginning of the demo, the analysis correctly identifies that consts should be fixed, but it incorrectly flags the loop variable as a violation instead of the collection it's iterating over.
 
 
 ## Requirements
@@ -87,7 +92,7 @@ The plugin provides three functions you can call or map to keys.
 ## To-do
 * Explore other treesitter-based actions I might want to do in Julia
 * Investigate adding support for linting local variable names. 
-
+* There is also a half-hearted experimental implementation that tries to interface with the LanguageServer.jl LSP for everything; this works poorly (if at all) -- I was surprised that LSP-based enforcement wasn't already an option, but I'm sure a smarter, functional implementation is out there somewhere.
 
 ### Thanks?
 
