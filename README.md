@@ -85,7 +85,8 @@ The plugin provides three functions you can call or map to keys.
 * `require('simpleJuliaTreesitterTools').cycle_violations()`: when `lint_action = "jump"`, this command will move the cursor to the next naming violation in the list.
 
 ## To-do
-
+* Correctness: make sure prepended underscores are always allowed.
+* Correctness: `(call_expression (field_expression (identifier) (identifiers)))`-like matches are probably from other modules / packages, and shouldn't be flagged?
 * Explore other treesitter-based actions I might want to do in Julia
 * Investigate adding support for linting local variable names. 
 

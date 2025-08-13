@@ -15,10 +15,17 @@ function M.split_word(s)
     return vim.split(s3,separator)
 end
 
+function M.lowercase_except_acronyms(word)
+    if #word > 1 and word == vim.fn.toupper(word) then
+        return word -- Preserve acronyms
+    end
+    return vim.fn.tolower(word)
+end
+
 function M.capitalize(word)
     if not word or #word == 0 then return '' end
     if #word > 1 and word == vim.fn.toupper(word) then
-        return word -- Preserve acronym like "HTTP"
+        return word
     end
     local lower_word = vim.fn.tolower(word)
     local first_char = vim.fn.strcharpart(lower_word, 0, 1)
@@ -26,7 +33,7 @@ function M.capitalize(word)
     return vim.fn.toupper(first_char) .. rest
 end
 
---all formatters expect `words` to be a table of lowercase symbols
+--all formatters expect `words` to be a table split by the M.split_word function
 M.formatters = {
     camelCase = function(words)
         if #words ==0 then return '' end
@@ -72,6 +79,7 @@ M.formatters = {
 
 }
 
+--This function converts text to the target case, preserving any leading underscores
 function M.convert(text, target_case)
     if not text or text == '' then return '' end
 
@@ -81,9 +89,18 @@ function M.convert(text, target_case)
         return text
     end
 
-    local words = M.split_word(text)
-    local The_one_Right_trueFormatting = formatter(words)
-    return The_one_Right_trueFormatting
+    --underscore logic: find and strip leading underscores
+    local prefix = ''
+    local main_text = text
+    local _, _, captured_prefix = string.find(main_text, "^(_+)")
+    if captured_prefix then
+        prefix = captured_prefix
+        main_text = string.sub(main_text, #prefix + 1)
+    end
+
+    local words = M.split_word(main_text)
+    local The_one_Right_trueFormattedTEXT = formatter(words)
+    return prefix .. The_one_Right_trueFormattedTEXT
 end
 
 --given a name, the kind, and the rules... what should the name be
