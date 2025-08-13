@@ -1,16 +1,32 @@
 local H = {}
 
-function H.create_lookup_table(list)
+function H.create_lookup_table(lists)
     local lookup = {}
-    for _, item in ipairs(list) do
-        lookup[item.name] = true
+    for _,list in pairs(lists) do
+        for _, item in ipairs(list) do
+            if item.name then
+                lookup[item.name] = true
+            else
+                lookup[item] = true
+            end
+        end
     end
     return lookup
 end
 
+function H.sort_violations(violations)
+    table.sort(violations, function(a, b)
+        if a.filepath == b.filepath then
+            return a.line < b.line
+        else
+            return a.filepath < b.filepath
+        end
+    end)
+    return violations
+end
+
 function H.populateQuickfixList(violations)
     if not violations or #violations == 0 then
-        vim.notify("No naming convention violations found", vim.log.levels.INFO)
         return
     end
 
@@ -30,42 +46,34 @@ function H.populateQuickfixList(violations)
     vim.cmd.copen()
 end
 
-function H.cycleCursor(targets,condition_fn)
-    local currentCursorLine = vim.api.nvim_win_get_cursor(0)[1]
-    local valid_targets = {}
-    for _, target in ipairs(targets) do
-        if condition_fn(target[3]) then
-            table.insert(valid_targets, target)
-        end
-    end
-    if #valid_targets == 0 then
+function H.jump_to_next_violation(state)
+    if not state.violations or #state.violations == 0 then
         return
     end
-    local target
-    if currentCursorLine < valid_targets[1][1] then
-        target = {valid_targets[1][1],valid_targets[1][2]}
-    elseif currentCursorLine > valid_targets[#valid_targets][1] then
-        target = {valid_targets[#valid_targets][1],valid_targets[#valid_targets][2]}
-    else
-        local foundCurrent = nil
-        for i = 1, #valid_targets do
-            if foundCurrent and valid_targets[i][1]~= currentCursorLine then
-                target = {valid_targets[i][1],valid_targets[i][2]}
-                break
-            end
+    state.current_violation_index = state.current_violation_index % #state.violations + 1
+    local violation = state.violations[state.current_violation_index]
 
-            if valid_targets[i][1] >= currentCursorLine then
-                foundCurrent = true
-            end
-        end
-        if not target and foundCurrent and valid_targets[1][1] ~= currentCursorLine then
-            target = {valid_targets[1][1],valid_targets[1][2]}
-        end
-
+    if vim.fn.expand('%:p') ~= vim.fn.expand(violation.filepath) then
+        vim.cmd.edit(vim.fn.expand(violation.filepath))
     end
-    if target then
-        vim.api.nvim_win_set_cursor(0, target)
+
+    vim.api.nvim_win_set_cursor(0, { violation.line, violation.char })
+
+    vim.notify(string.format("Violation %d/%d: %s '%s' should be '%s'",
+        state.current_violation_index, #state.violations, violation.nameType, violation.name,violation.suggestedName),
+        vim.log.levels.WARN)
+end
+
+function H.lint_action(violations,options,state)
+    local sorted_violations = H.sort_violations(violations)
+    if options.lint_action == "quickfix" then
+        H.populateQuickfixList(sorted_violations)
+    elseif options.lint_action == "jump" then
+        state.violations = sorted_violations
+        state.current_violation_index = 0
+        H.jump_to_next_violation(state)
     end
 end
+
 
 return H

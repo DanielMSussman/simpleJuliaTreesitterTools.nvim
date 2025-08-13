@@ -1,10 +1,10 @@
 local M = {}
 
-local config = require("simpleJuliaTreesitterTools").get_options()
+local defaultsAndData = require("simpleJuliaTreesitterTools.defaultsAndData")
 local caseUtilities = require("simpleJuliaTreesitterTools.caseUtilities")
 local helpers = require("simpleJuliaTreesitterTools.helperFunctions")
 
-function M.find_first_occurrence_of_query(root_node,q,capture_target,reject_table,fileString)
+function M.capture_unique_definitions(root_node,fileString,q,capture_target,reject_table)
 
     local query = vim.treesitter.query.get("julia", q)
     local iterCaptures = query:iter_captures(root_node,fileString)
@@ -27,7 +27,7 @@ function M.find_first_occurrence_of_query(root_node,q,capture_target,reject_tabl
     return query_names
 end
 
-function M.process_query_over_trees(trees,queryDefinition,captureGroupTarget,rejectList,nameType)
+function M.process_query_over_trees(trees,queryDefinition,captureGroupTarget,rejectList,nameType,config)
     local allItems = {}
     for _, item in ipairs(trees) do
         local filepath = item[1]
@@ -36,7 +36,7 @@ function M.process_query_over_trees(trees,queryDefinition,captureGroupTarget,rej
         if item[3] ~= nil then
             fileString = item[3]
         end
-        local items = M.find_first_occurrence_of_query(root_node,queryDefinition,captureGroupTarget,rejectList,fileString)
+        local items = M.capture_unique_definitions(root_node,fileString,queryDefinition,captureGroupTarget,rejectList)
         for _, info in ipairs(items) do
             local suggestedName = caseUtilities.convert(info.name,config.rules[nameType])
             table.insert(allItems, {
@@ -53,32 +53,17 @@ function M.process_query_over_trees(trees,queryDefinition,captureGroupTarget,rej
 end
 
 -- in processing a list of {filename, tree roots}, we need to first look for type declarations, then use those to filter out functions
-function M.process_trees(trees)
-    local all_types = M.process_query_over_trees(trees,"types","type.definition",{},"Struct")
-    local all_abstract_types = M.process_query_over_trees(trees,"types","abstracttype.definition",{},"AbstractType")
-    for _, item in ipairs(all_abstract_types) do
-        table.insert(all_types, item)
-    end
+function M.process_trees(trees,config)
+    local all_types = M.process_query_over_trees(trees,"types","type.definition",{},"Struct",config)
+    local all_abstract_types = M.process_query_over_trees(trees,"types","abstracttype.definition",{},"AbstractType",config)
 
-    local typeLookup = helpers.create_lookup_table(all_types)
+    local typeLookup = helpers.create_lookup_table({all_types,all_abstract_types,defaultsAndData.PrimitiveTypes})
 
-    local primitive_types = {
-        "AbstractChar", "AbstractFloat", "AbstractString", "Bool", "Char",
-        "ComplexF16", "ComplexF32", "ComplexF64", "Float16", "Float32", "Float64",
-        "Int128", "Int16", "Int32", "Int64", "Int8", "Integer","Int", "Number",
-        "Real", "Signed", "String", "Symbol", "UInt128", "UInt16", "UInt32",
-        "UInt64", "UInt8", "Unsigned", "Nothing", "Missing", "Any"
-    }
+    local all_modules = M.process_query_over_trees(trees,"modules","module.definition",{},"Module",config)
 
-    for _, type_name in ipairs(primitive_types) do
-        typeLookup[type_name] = true
-    end
+    local all_functions = M.process_query_over_trees(trees,"functions","function.definition",typeLookup,"Function",config)
 
-    local all_modules = M.process_query_over_trees(trees,"modules","module.definition",{},"Module")
-
-    local all_functions = M.process_query_over_trees(trees,"functions","function.definition",typeLookup,"Function")
-
-    local all_constants = M.process_query_over_trees(trees,"constants","constant.definition",typeLookup,"Constant")
+    local all_constants = M.process_query_over_trees(trees,"constants","constant.definition",typeLookup,"Constant",config)
 
     return {
         modules = all_modules,
@@ -88,12 +73,12 @@ function M.process_trees(trees)
     }
 end
 
-function M.lint_buffer()
+function M.lint_buffer(options,state)
     local root = vim.treesitter.get_node():root()
     local filename = vim.api.nvim_buf_get_name(0)
     if not root then return {} end
 
-    local results = M.process_trees({{filename,root}})
+    local results = M.process_trees({{filename,root}},options)
     local violations = {}
     for _,list in pairs(results) do
         for _,item in ipairs(list) do
@@ -102,21 +87,23 @@ function M.lint_buffer()
             end
         end
     end
-    helpers.populateQuickfixList(violations)
+
+    vim.notify( "Buffer linting complete. Found " .. #violations .. " violations.", vim.log.levels.INFO)
+
+    helpers.lint_action(violations,options,state)
 end
 
 ---(eventually) Asynchronously lints all .jl files in the project's `src` directory.
-function M.lint_project()
-    vim.notify("Starting project-wide lint...", vim.log.levels.INFO)
+function M.lint_project(options,state)
 
-    local project_toml_path = vim.fs.find({ "Project.toml" }, { upward = true, type = "file" })[1]
-    if not project_toml_path then
-        vim.notify("No Project.toml found. Aborting lint.", vim.log.levels.WARN)
+    local project_path = vim.fs.find({ options.projectRootFile }, { upward = true, type = "file" })[1]
+    if not project_path then
+        vim.notify("No ".. options.projectRootFile .." found. Aborting lint.", vim.log.levels.WARN)
         return
     end
 
-    local project_root = vim.fs.dirname(project_toml_path)
-    local src_path = project_root .. "/src"
+    local project_root = vim.fs.dirname(project_path)
+    local src_path = project_root .. options.projectDirectory
 
     --having problems with cross-platform vim.fs.find? I'm sure this is trivially fixable, but this is fine for now
     local all_files_in_src = vim.fs.find(function() return true end, { path = src_path, type = "file",limit = math.huge })
@@ -145,7 +132,7 @@ function M.lint_project()
         end
     end
 
-    local results = M.process_trees(trees)
+    local results = M.process_trees(trees,options)
 
     local violations = {}
     for _, list in pairs(results) do
@@ -156,7 +143,7 @@ function M.lint_project()
         end
     end
 
-    helpers.populateQuickfixList(violations)
+    helpers.lint_action(violations,options,state)
     vim.notify( "Project linting complete. Found " .. #violations .. " violations.", vim.log.levels.INFO)
 end
 

@@ -7,7 +7,6 @@ local M = {}
 M.current_violation_index = 0
 M.violations = {}
 
-local config = require("simpleJuliaTreesitterTools").get_options()
 local caseUtilities = require("simpleJuliaTreesitterTools.caseUtilities")
 
 
@@ -37,7 +36,8 @@ function M.fix_next_violation(violations,current_violation)
         end)
 end
 
-function M.check_document_symbols()
+function M.check_document_symbols(options,state)
+    M.config = options
     M.current_violation_index = 0
     M.violations = {}
     -- the simpler local params = vim.lsp.util.make_text_document_params() didn't work?
@@ -51,7 +51,7 @@ function M.check_document_symbols()
 
         for _,symbol in ipairs(symbols) do
             local kind_str = vim.lsp.protocol.SymbolKind[symbol.kind]
-            local targetName = caseUtilities.target_name(symbol.name,kind_str,config.rules)
+            local targetName = caseUtilities.target_name(symbol.name,kind_str,options.rules)
 
             if targetName and symbol.name ~= targetName then
                 table.insert(M.violations, {

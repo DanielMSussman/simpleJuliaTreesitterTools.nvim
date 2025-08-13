@@ -8,7 +8,6 @@ function M.split_and_lowercase(s)
     local separator = '-'
 
     --s1 through s3 swap or insert the separator for _, before capital letters, and try to respect acronyms
-    print(vim.inspect(s))
     local s1 = vim.fn.substitute(s, '[_.-]', separator, 'g')
     local s2 = vim.fn.substitute(s1, '\\v(\\l|\\d)@<=(\\u)', separator .. '\\2', 'g')
     local s3 = vim.fn.substitute(s2, '\\v(\\u)@<=(\\u\\l)', separator .. '\\2', 'g')
@@ -40,6 +39,15 @@ M.formatters = {
 
     UpperCamelCase = function(words)
         return table.concat(vim.tbl_map(M.capitalize, words), '')
+    end,
+
+    lowercase = function(words)
+        return table.concat(words, '')
+    end,
+
+    UPPERCASE = function(words)
+        local upper_words = vim.tbl_map(vim.fn.toupper,words)
+        return table.concat(upper_words, '')
     end,
 
     snake_case = function(words)

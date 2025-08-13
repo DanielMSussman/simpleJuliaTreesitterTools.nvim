@@ -1,21 +1,38 @@
-So far this repo just tests out adhering to naming conventions in Julia via treesitter.
-This obviously cannot be completely correct, but for most cases I think treesitter should be able to handle things.
-The current functionality is a best-effort attempt to check that modules, types, constants, and functions have the correct case.
-Violations of naming conventions are sent to the quickfix list.
+This lightweight collection of treesitter tools for Julia currently focuses just on violations of naming conventions.
+
+It makes a best-effort attempt to parse your code and check that modules, types, constants, and functions adhere to your preferred case conventions.
+It's smart enough -- since treesitter doesn't give us semantic information -- to identify all type definitions first, which helps it avoid incorrectly flagging constructors as function-naming violations.
+
+
+### Features
+
+- Targeted naming convention checks for Modules, Structs, Abstract Types, Constants, and Functions.
+- Choose to lint the current buffer, the entire project, or specific directories.
+- Configurable naming rules for compliance with your preferred style
+- Reporting modes: `quickfix` to send all violations to the quickfix list for review or `jump` to jump to the first violation and then cycle through the rest.
+
+### Demo
+
+
 Here's a brief demo checking the ForwardDiff.jl package, then monkeying around in it to generate some violations:
 
 https://github.com/user-attachments/assets/dde15d57-86c9-4f86-bca1-86b14d234bbf
 
-In order to handle constructors (which look like functions as far as treesitter is concerned, of course), we first enumerate all type definitions and then do not report potential naming violations for functions that have the same name as an existing type. That's why in the above video when we change `Dual` to `dual` the previously unreported use of the constructors throws a potential flag.
+Notice that in the above video when we change `Dual` to `dual` the previously unreported use of the constructors throws a potential flag.
 So far this all works reasonably well, although I'm sure there are corner cases that are outside of my (or treesitter's?) ability to correctly parse.
 
 There is also a half-finished experimental implementation that tries to interface with the LanguageServer.jl LSP for everything; this works poorly (if at all) -- I was surprised that LSP-based enforcement wasn't already an option, but I'm sure a smarter, functional implementation is out there somewhere.
 
-## Installation, configuration, and requirements
 
-This uses the neovim >0.11 way of iterating through treesitter queries
+## Requirements
 
-Using [lazy.nvim](https://github.com/folke/lazy.nvim), installation is just
+* Neovim >= 0.11 (for the modern treesitter query API)
+* [nvim-treesitter/nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
+
+
+## Installation and configuration
+
+Install with your favorite plugin manager. Here's the minimal [lazy.nvim](https://github.com/folke/lazy.nvim) installation:
 ```lua 
 {
     "DanielMSussman/simpleJuliaTreesitterTools.nvim",
@@ -24,7 +41,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim), installation is just
 }
 ```
 
-There are a small handful of default options that can be changed by passing options to the setup function. A more complete lazy config with all currently available options and keymaps that access the accessible functions:
+Here is a more complete configuration example showing all of the options and some recommended keymaps:
 ```lua
 {
     "DanielMSussman/simpleJuliaTreesitterTools.nvim",
@@ -39,7 +56,10 @@ There are a small handful of default options that can be changed by passing opti
                 ["AbstractType"] = "AbstractUpperCamelCase",
                 ["Function"] = "snake_case",
             },
-            defaultApproach = "treesitter", --or "lsp"...
+            defaultApproach = "treesitter",
+            lint_action = "quickfix", -- "quickfix" or "jump"
+            projectRootFile = "Project.toml",
+            projectDirectory = "/src",
         })
         vim.keymap.set('n', '<localleader>lb', function()
             require('simpleJuliaTreesitterTools').lint_buffer_names()
@@ -48,14 +68,26 @@ There are a small handful of default options that can be changed by passing opti
         vim.keymap.set('n', '<localleader>lp', function()
             require('simpleJuliaTreesitterTools').lint_project_names()
         end, { desc = '[L]int names in current [p]roject' })
+
+        vim.keymap.set('n', '<localleader>lc', function()
+            require('simpleJuliaTreesitterTools').cycle_violations()
+        end, { desc = '[L]inting: [c]ycle to next violation' })
     end
 }
 ```
 
+## Usage
+
+The plugin provides three functions you can call or map to keys.
+
+* `require('simpleJuliaTreesitterTools').lint_buffer_names()` finds naming violations in the current buffer
+* `require('simpleJuliaTreesitterTools').lint_project_names()` finds the `projectRootFile` and lints all `.jl` files in the `projectDirectory`.
+* `require('simpleJuliaTreesitterTools').cycle_violations()`: when `lint_action = "jump"`, this command will move the cursor to the next naming violation in the list.
+
 ## To-do
 
-Any number of improvements could be made, and of course I'll probably want some other (e.g.) treesitter-based text objects to use for purposes other than linting. 
-On the naming conventions, I just noticed that guides enforce variable name conventions, too... I'm not sure about that (vectors and matrices, right?), but the current pattern of filtering future queries could be used to handle this.
+* Explore other treesitter-based actions I might want to do in Julia
+* Investigate adding support for linting local variable names. 
 
 
 ### Thanks?
